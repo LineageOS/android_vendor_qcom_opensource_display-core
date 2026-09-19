@@ -1681,6 +1681,14 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
       }
     }
 
+#if defined(OPLUS_UDFPS_INPUT_PRESS) && OPLUS_UDFPS_INPUT_PRESS == 1
+    // Opted-in OPlus products preserve input press state across composition.
+    if (hw_layers_info->common_info &&
+        hw_layers_info->common_info->flags.fod_pressed_present) {
+      mask_state |= OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER;
+    }
+#endif
+
     if (current_mask_state_ != mask_state) {
       current_mask_state_ = mask_state;
       drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK, token_.conn_id, mask_state);

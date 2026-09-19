@@ -800,6 +800,12 @@ static bool IsHDRLayerPresent(Layer *layer) {
 
 void SDMDisplay::BuildLayerStack() {
   layer_stack_ = LayerStack();
+#if defined(OPLUS_FINGERPRINT_MASK) && defined(OPLUS_UDFPS_INPUT_PRESS) && \
+    OPLUS_UDFPS_INPUT_PRESS == 1
+  // Keep this accumulator independent of the per-layer UDFPS_ZPOS flags.
+  const char kOplusTouchedLayerName[] = "SurfaceView[UdfpsControllerOverlay]";
+  bool oplus_input_pressed = false;
+#endif
   display_rect_ = LayerRect();
   layer_stack_.flags.use_metadata_refresh_rate = false;
   layer_stack_.flags.animating = animating_;
@@ -1018,9 +1024,22 @@ void SDMDisplay::BuildLayerStack() {
 
     layer->layer_id = sdm_layer->GetId();
     layer->layer_name = sdm_layer->GetName();
+#if defined(OPLUS_FINGERPRINT_MASK) && defined(OPLUS_UDFPS_INPUT_PRESS) && \
+    OPLUS_UDFPS_INPUT_PRESS == 1
+    if (layer->layer_name.find(kOplusTouchedLayerName) != std::string::npos &&
+        layer->input_buffer.buffer_id != 0) {
+      oplus_input_pressed = true;
+    }
+#endif
     layer->geometry_changes = sdm_layer->GetGeometryChanges();
     layer_stack_.layers.push_back(layer);
   }
+
+#if defined(OPLUS_FINGERPRINT_MASK) && defined(OPLUS_UDFPS_INPUT_PRESS) && \
+    OPLUS_UDFPS_INPUT_PRESS == 1
+  // A later non-FOD layer must not erase an earlier touched-layer match.
+  layer_stack_.flags.fod_pressed_present |= oplus_input_pressed;
+#endif
 
   // TODO(user): Set correctly when SDM supports geometry_changes as bitmask
   geometry_changes_ |= sdm_layer_stack_->geometry_changes_;
