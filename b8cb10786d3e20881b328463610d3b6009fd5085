@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d0499fb_59981dcf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2026-09-20T17:14:18Z",
+      "side": 1,
+      "message": "partial update was instead disabled in kernel dts because of:\n\n```\n09-20 20:33:11.479  1790  2070 E SDM     : HWDeviceDRM::SetupAtomic: ROI_DIAG submitted_ltrb\u003d0,176,1272,2772 align_lwth\u003d1272,1272,88,88 min_wh\u003d1272,88\n09-20 20:33:11.485  2070  2070 E         : [drm:sde_connector_roi_v1_check_roi:2398] sde_connector_roi_v1_check_roi[sde error]conn70 invalid conn roi height 2596 min 88 align 88\n```\n\nif someone needs this change and has no problems with roi, please bump and i\u0027ll review it then.",
+      "revId": "b8cb10786d3e20881b328463610d3b6009fd5085",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
