@@ -709,7 +709,8 @@ void SDMDisplay::PopulateSDMExtendedDisplayResolution() {
   }
   extended_display_resolutions = final_extended_display_resolutions;
 
-  uint32_t config_index = variable_config_map_.size();
+  uint32_t config_index =
+      variable_config_map_.empty() ? 0 : variable_config_map_.rbegin()->first + 1;
 
   // pop the extra config pushed for POMS support to make it equal to the variable_config
   if (is_poms_mode_) {
