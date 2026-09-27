@@ -16,6 +16,23 @@
       "message": "Tested on infiniti. Fixes the missing 165 Hz mode at both resolutions",
       "revId": "fb79f10a2d55776216e99f07123bf0019fa3f2c5",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88f89872_454998a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 10067
+      },
+      "writtenOn": "2026-09-27T10:18:59Z",
+      "side": 1,
+      "message": "I\u0027m too stupid to understand how this helps, but it just takes idx of the last map element and increments it...",
+      "revId": "fb79f10a2d55776216e99f07123bf0019fa3f2c5",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
