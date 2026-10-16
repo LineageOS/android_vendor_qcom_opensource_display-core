@@ -57,6 +57,19 @@
 
 namespace sdm {
 
+#ifdef OPLUS_VIDEO_AOD_FPS
+// UDFPS needs the panel out of AOD to light up the sensor area.
+static bool HasUdfpsLayer(const LayerStack *stack) {
+  for (auto &layer : stack->layers) {
+    if (layer->layer_name.find("Dim Layer for UDFPS") != std::string::npos ||
+        layer->layer_name.find("SurfaceView[UdfpsControllerOverlay]") != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
+
 DisplayBuiltIn::DisplayBuiltIn(DisplayEventHandler *event_handler,
                                sdm::MultiCoreInstance<uint32_t, HWInfoInterface *> hw_info_intf,
                                BufferAllocator *buffer_allocator, CompManager *comp_manager,
@@ -1686,6 +1699,18 @@ DisplayError DisplayBuiltIn::SetDisplayState(DisplayState state, bool teardown,
   if (pending_power_state_ != kPowerStateNone) {
     event_handler_->Refresh();
   }
+
+#ifdef OPLUS_VIDEO_AOD_FPS
+  // Switch to or away from the AOD refresh rate on the next frame.
+  if (client_ctx_.hw_panel_info.mode == kModeVideo &&
+      (((state == kStateDoze || state == kStateDozeSuspend) &&
+        current_refresh_rate_ != OPLUS_VIDEO_AOD_FPS) ||
+       (state == kStateOn && current_refresh_rate_ == OPLUS_VIDEO_AOD_FPS))) {
+    validated_ = false;
+    needs_validate_ = true;
+    event_handler_->Refresh();
+  }
+#endif
 
   // Must only happen after NullCommit and get applied in next frame
   if (((demura_intended_ && demura_dynamic_enabled_) || abc_enabled_) &&
@@ -3810,16 +3835,27 @@ DisplayError DisplayBuiltIn::ChangeFps() {
   uint32_t num_updating_layers = GetUpdatingLayersCount();
   bool one_updating_layer = (num_updating_layers == 1);
   uint32_t refresh_rate = GetOptimalRefreshRate(one_updating_layer);
+  bool aod_refresh_rate = false;
 
-  if (refresh_rate < client_ctx_.hw_panel_info.min_fps ||
-      refresh_rate > client_ctx_.hw_panel_info.max_fps) {
+#ifdef OPLUS_VIDEO_AOD_FPS
+  // Video mode panel enters and exits AOD based on the refresh rate it is fed with.
+  if ((state_ == kStateDoze || state_ == kStateDozeSuspend) &&
+      client_ctx_.hw_panel_info.mode == kModeVideo &&
+      !HasUdfpsLayer(disp_layer_stack_->stack)) {
+    refresh_rate = OPLUS_VIDEO_AOD_FPS;
+    aod_refresh_rate = true;
+  }
+#endif
+
+  if (!aod_refresh_rate && (refresh_rate < client_ctx_.hw_panel_info.min_fps ||
+      refresh_rate > client_ctx_.hw_panel_info.max_fps)) {
     DLOGE("Invalid Fps = %d request", refresh_rate);
     return kErrorParameters;
   }
 
   bool idle_screen = GetUpdatingAppLayersCount(disp_layer_stack_->stack) == 0;
-  if (!disp_layer_stack_->stack->force_refresh_rate && IdleFallbackLowerFps(idle_screen) &&
-      !enable_qsync_idle_) {
+  if (!aod_refresh_rate && !disp_layer_stack_->stack->force_refresh_rate &&
+      IdleFallbackLowerFps(idle_screen) && !enable_qsync_idle_) {
     refresh_rate = client_ctx_.hw_panel_info.min_fps;
   }
 

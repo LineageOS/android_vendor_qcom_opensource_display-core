@@ -1064,9 +1064,21 @@ void HWDeviceDRM::PopulateHWPanelInfo() {
   if (hw_panel_info_.dynamic_fps) {
     uint32_t min_fps = current_mode.vrefresh;
     uint32_t max_fps = current_mode.vrefresh;
+#ifdef OPLUS_VIDEO_AOD_FPS
+    // The AOD refresh rate is reserved for doze, keep it out of the regular range.
+    if (current_mode.vrefresh == OPLUS_VIDEO_AOD_FPS) {
+      min_fps = UINT32_MAX;
+      max_fps = 0;
+    }
+#endif
     for (uint32_t mode_index = 0; mode_index < connector_info_.modes.size(); mode_index++) {
       if ((current_mode.vdisplay == connector_info_.modes[mode_index].mode.vdisplay) &&
           (current_mode.hdisplay == connector_info_.modes[mode_index].mode.hdisplay)) {
+#ifdef OPLUS_VIDEO_AOD_FPS
+        if (connector_info_.modes[mode_index].mode.vrefresh == OPLUS_VIDEO_AOD_FPS) {
+          continue;
+        }
+#endif
         if (min_fps > connector_info_.modes[mode_index].mode.vrefresh)  {
           min_fps = connector_info_.modes[mode_index].mode.vrefresh;
         }
