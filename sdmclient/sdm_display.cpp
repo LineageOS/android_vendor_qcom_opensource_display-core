@@ -1245,8 +1245,15 @@ DisplayError SDMDisplay::GetDisplayConfigs(std::vector<int32_t> *out_configs) {
     if (i == num_configs_) {
       break;
     }
+#ifdef OPLUS_VIDEO_AOD_FPS
+    // The AOD refresh rate is only used internally while dozing.
+    if (display_class_ == DISPLAY_CLASS_BUILTIN && info.second.fps == OPLUS_VIDEO_AOD_FPS) {
+      continue;
+    }
+#endif
     out_configs->at(i++) = info.first;
   }
+  out_configs->resize(i);
 
   return kErrorNone;
 }
@@ -1399,6 +1406,16 @@ DisplayError SDMDisplay::SetActiveConfig(Config config) {
   if (current_config == config) {
     return kErrorNone;
   }
+
+#ifdef OPLUS_VIDEO_AOD_FPS
+  // The AOD refresh rate is only used internally while dozing.
+  if (display_class_ == DISPLAY_CLASS_BUILTIN &&
+      variable_config_map_.find(config) != variable_config_map_.end() &&
+      variable_config_map_[config].fps == OPLUS_VIDEO_AOD_FPS) {
+    DLOGW("Rejecting AOD config: %d for display [%" PRIu64 "]-[%u]", config, id_, type_);
+    return kErrorNotSupported;
+  }
+#endif
 
   bool is_vconfig_fps_switched = false;
   if (variable_config_map_.find(config) != variable_config_map_.end()) {
@@ -3061,6 +3078,15 @@ DisplayError SDMDisplay::SetActiveConfigWithConstraints(
     return kErrorNotSupported;
   }
 
+#ifdef OPLUS_VIDEO_AOD_FPS
+  // The AOD refresh rate is only used internally while dozing.
+  if (display_class_ == DISPLAY_CLASS_BUILTIN &&
+      variable_config_map_[config].fps == OPLUS_VIDEO_AOD_FPS) {
+    DLOGW("Rejecting AOD config: %d for display [%" PRIu64 "]-[%u]", config, id_, type_);
+    return kErrorNotSupported;
+  }
+#endif
+
   if (vsync_period_change_constraints->seamlessRequired && !AllowSeamless(config)) {
     DLOGE(
         "Seamless switch to the config: %d, is not allowed! for display "
@@ -4082,6 +4108,19 @@ DisplayError SDMDisplay::GetSDMActiveConfig(bool get_real_config, Config *config
   if (get_real_config) {
     return kErrorNone;
   }
+
+#ifdef OPLUS_VIDEO_AOD_FPS
+  // While dozing the panel runs at the hidden AOD refresh rate, report the client's config.
+  if (display_class_ == DISPLAY_CLASS_BUILTIN && real_config < sdm_config_map_.size() &&
+      variable_config_map_.find(active_config_index_) != variable_config_map_.end()) {
+    auto real_info = variable_config_map_.find(sdm_config_map_.at(real_config));
+    if (real_info != variable_config_map_.end() &&
+        real_info->second.fps == OPLUS_VIDEO_AOD_FPS) {
+      *config_index = active_config_index_;
+      return kErrorNone;
+    }
+  }
+#endif
 
   if (variable_config_map_.find(active_config_index_) != variable_config_map_.end()) {
     auto &info = variable_config_map_[active_config_index_];
