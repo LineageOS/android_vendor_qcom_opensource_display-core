@@ -1682,8 +1682,11 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
     }
 
     if (current_mask_state_ != mask_state) {
-      current_mask_state_ = mask_state;
       drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK, token_.conn_id, mask_state);
+      // Validate requests are discarded; only cache what a real commit sends.
+      if (!validate) {
+        current_mask_state_ = mask_state;
+      }
     }
   }
 #endif

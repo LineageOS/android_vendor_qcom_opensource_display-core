@@ -3822,6 +3822,11 @@ DisplayError DisplayBuiltIn::ChangeFps() {
       !enable_qsync_idle_) {
     refresh_rate = client_ctx_.hw_panel_info.min_fps;
   }
+#ifdef OPLUS_RESERVE_AOD_30HZ
+  // 30Hz is the panel's AOD timing: use it only while dozing.
+  refresh_rate = (state_ == kStateDoze || state_ == kStateDozeSuspend) ? 30 :
+                 std::max(refresh_rate, 60u);
+#endif
 
   if (current_refresh_rate_ != refresh_rate) {
     DisplayError error = dpu_core_mux_->SetRefreshRate(refresh_rate);

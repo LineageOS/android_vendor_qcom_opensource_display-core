@@ -1245,8 +1245,14 @@ DisplayError SDMDisplay::GetDisplayConfigs(std::vector<int32_t> *out_configs) {
     if (i == num_configs_) {
       break;
     }
+#ifdef OPLUS_RESERVE_AOD_30HZ
+    if (info.second.fps == 30) {
+      continue;
+    }
+#endif
     out_configs->at(i++) = info.first;
   }
+  out_configs->resize(i);
 
   return kErrorNone;
 }
@@ -2722,6 +2728,11 @@ DisplayError SDMDisplay::GetAllDisplayAttributes(
   int index = 0;
 
   for (auto &config : variable_config_map_) {
+#ifdef OPLUS_RESERVE_AOD_30HZ
+    if (config.second.fps == 30) {
+      continue;
+    }
+#endif
     info->insert(std::make_pair(config.first, config.second));
   }
 
