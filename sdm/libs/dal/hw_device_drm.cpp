@@ -85,10 +85,6 @@ enum oplus_ofp_property_value {
 };
 
 #include <UdfpsExtension.h>
-#ifdef UDFPS_TOUCHED_LAYER_NAME
-#undef UDFPS_TOUCHED_LAYER_NAME
-#define UDFPS_TOUCHED_LAYER_NAME "SurfaceView[UdfpsControllerOverlay]"
-#endif
 #endif
 #ifdef UDFPS_ZPOS
 #include <display/drm/sde_drm.h>
@@ -1676,14 +1672,18 @@ void HWDeviceDRM::SetupAtomic(Fence::ScopedRef &scoped_ref, HWLayersInfo *hw_lay
       const std::string &name = hw_layers_info->hw_layers[i].layer_name;
       if (name.find(UDFPS_DIM_LAYER_NAME) != std::string::npos) {
         mask_state |= OPLUS_OFP_PROPERTY_DIM_LAYER;
-      } else if (name.find(UDFPS_TOUCHED_LAYER_NAME) != std::string::npos) {
-        mask_state |= OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER;
       }
+    }
+    if (hw_layers_info->common_info->flags.fod_pressed_present) {
+      mask_state |= OPLUS_OFP_PROPERTY_FINGERPRESS_LAYER;
     }
 
     if (current_mask_state_ != mask_state) {
-      current_mask_state_ = mask_state;
       drm_atomic_intf_->Perform(DRMOps::CONNECTOR_SET_FINGERPRINT_MASK, token_.conn_id, mask_state);
+      // Validate requests are discarded; only cache what a real commit sends.
+      if (!validate) {
+        current_mask_state_ = mask_state;
+      }
     }
   }
 #endif

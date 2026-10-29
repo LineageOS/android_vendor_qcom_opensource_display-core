@@ -1018,6 +1018,12 @@ void SDMDisplay::BuildLayerStack() {
 
     layer->layer_id = sdm_layer->GetId();
     layer->layer_name = sdm_layer->GetName();
+#ifdef OPLUS_FINGERPRINT_MASK
+    // Check the full stack: a GPU composed pressed layer is missing from the HW layers.
+    if (layer->layer_name.find("SurfaceView[UdfpsControllerOverlay]") != std::string::npos) {
+      layer_stack_.flags.fod_pressed_present = true;
+    }
+#endif
     layer->geometry_changes = sdm_layer->GetGeometryChanges();
     layer_stack_.layers.push_back(layer);
   }
@@ -1245,8 +1251,14 @@ DisplayError SDMDisplay::GetDisplayConfigs(std::vector<int32_t> *out_configs) {
     if (i == num_configs_) {
       break;
     }
+#ifdef OPLUS_RESERVE_AOD_30HZ
+    if (info.second.fps == 30) {
+      continue;
+    }
+#endif
     out_configs->at(i++) = info.first;
   }
+  out_configs->resize(i);
 
   return kErrorNone;
 }
@@ -2722,6 +2734,11 @@ DisplayError SDMDisplay::GetAllDisplayAttributes(
   int index = 0;
 
   for (auto &config : variable_config_map_) {
+#ifdef OPLUS_RESERVE_AOD_30HZ
+    if (config.second.fps == 30) {
+      continue;
+    }
+#endif
     info->insert(std::make_pair(config.first, config.second));
   }
 
