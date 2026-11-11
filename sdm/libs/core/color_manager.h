@@ -240,6 +240,7 @@ class ColorManagerProxy : public ColorManagerIntf {
   void DumpColorMetaData(const ColorMetaData &color_metadata);
   bool HasNativeModeSupport();
   DisplayError ApplySwAssets();
+  void ReapplyGlobalPaConfig();
 
   uint32_t display_id_;
   SDMDisplayType device_type_;
@@ -261,6 +262,7 @@ class ColorManagerProxy : public ColorManagerIntf {
   bool prev_idle_fallback_hint_ = false;
   ColorMode prev_idle_fallback_mode_ = {};
   struct snapdragoncolor::ColorTransform curr_color_xform_ = {};
+  std::vector<uint8_t> global_pa_cfg_;
 };
 
 class ColorFeatureCheckingImpl : public FeatureInterface {
